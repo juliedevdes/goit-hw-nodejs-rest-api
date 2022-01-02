@@ -3,6 +3,22 @@ const router = express.Router();
 const { NotFound, BadRequest } = require("http-errors");
 const Joi = require("joi");
 
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+dotenv.config();
+
+const { DB_HOST } = process.env;
+
+mongoose
+  .connect(DB_HOST)
+  .then(() => {
+    console.log("Database connection successful");
+  })
+  .catch(() => {
+    console.log("Database connection error");
+    process.exit(1);
+  });
+
 const joiSchema = Joi.object({
   name: Joi.string().required(),
   phone: Joi.string().required(),
