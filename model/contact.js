@@ -19,4 +19,13 @@ const contactSchema = Schema({
 
 const Contact = model("contact", contactSchema);
 
-module.exports = Contact;
+const Joi = require("joi");
+
+const joiSchema = Joi.object({
+  name: Joi.string().required(),
+  phone: Joi.string().required(),
+  email: Joi.string().required(),
+  favorite: Joi.boolean(),
+});
+
+module.exports = { Contact, joiSchema };

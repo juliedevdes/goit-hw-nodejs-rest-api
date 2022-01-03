@@ -1,16 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { NotFound, BadRequest } = require("http-errors");
-const Joi = require("joi");
 
-const joiSchema = Joi.object({
-  name: Joi.string().required(),
-  phone: Joi.string().required(),
-  email: Joi.string().required(),
-  favorite: Joi.boolean(),
-});
-
-const Contact = require("../../model");
+const { Contact, joiSchema } = require("../../model");
 
 router.get("/", async (req, res, next) => {
   try {
@@ -72,6 +64,29 @@ router.put("/:contactId", async (req, res, next) => {
     const updatedContact = await Contact.findByIdAndUpdate(
       contactId,
       req.body,
+      { new: true }
+    );
+    if (!updatedContact) {
+      throw new NotFound();
+    }
+
+    res.json(updatedContact);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/:contactId/favorite", async (req, res, next) => {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+
+  try {
+    if (favorite === undefined) {
+      throw new BadRequest("missing field favorite");
+    }
+    const updatedContact = await Contact.findByIdAndUpdate(
+      contactId,
+      { favorite },
       { new: true }
     );
     if (!updatedContact) {
