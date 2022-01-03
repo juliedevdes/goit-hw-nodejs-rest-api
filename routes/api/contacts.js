@@ -3,39 +3,18 @@ const router = express.Router();
 const { NotFound, BadRequest } = require("http-errors");
 const Joi = require("joi");
 
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-dotenv.config();
-
-const { DB_HOST } = process.env;
-
-mongoose
-  .connect(DB_HOST)
-  .then(() => {
-    console.log("Database connection successful");
-  })
-  .catch(() => {
-    console.log("Database connection error");
-    process.exit(1);
-  });
-
 const joiSchema = Joi.object({
   name: Joi.string().required(),
   phone: Joi.string().required(),
   email: Joi.string().required(),
+  favorite: Joi.boolean(),
 });
 
-const {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateContact,
-} = require("../../model");
+const Contact = require("../../model");
 
 router.get("/", async (req, res, next) => {
   try {
-    res.json(await listContacts());
+    res.json(await Contact.find());
   } catch (error) {
     next(error);
   }
@@ -44,12 +23,15 @@ router.get("/", async (req, res, next) => {
 router.get("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   try {
-    const foundContact = await getContactById(contactId);
+    const foundContact = await Contact.findById(contactId);
     if (!foundContact) {
       throw new NotFound();
     }
     res.json(foundContact);
   } catch (error) {
+    if (error.message.includes("Cast to ObjectId failed")) {
+      error.status = 404;
+    }
     next(error);
   }
 });
@@ -60,9 +42,12 @@ router.post("/", async (req, res, next) => {
     if (error) {
       throw new BadRequest(error.message);
     }
-    const newContact = await addContact(req.body);
+    const newContact = await Contact.create(req.body);
     res.status(201).json(newContact);
   } catch (error) {
+    if (error.message.includes("is required")) {
+      error.status = 400;
+    }
     next(error);
   }
 });
@@ -71,7 +56,7 @@ router.delete("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
 
   try {
-    const deletedContact = await removeContact(contactId);
+    const deletedContact = await Contact.findByIdAndRemove(contactId);
     if (!deletedContact) {
       throw new NotFound();
     }
@@ -84,12 +69,12 @@ router.delete("/:contactId", async (req, res, next) => {
 router.put("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   try {
-    const { error } = joiSchema.validate(req.body);
-    if (error) {
-      throw new BadRequest(error.message);
-    }
-    const updatedContact = await updateContact(contactId, req.body);
-    if (updateContact) {
+    const updatedContact = await Contact.findByIdAndUpdate(
+      contactId,
+      req.body,
+      { new: true }
+    );
+    if (!updatedContact) {
       throw new NotFound();
     }
 
