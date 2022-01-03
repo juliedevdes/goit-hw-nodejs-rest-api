@@ -58,14 +58,14 @@ router.delete("/:contactId", async (req, res, next) => {
   }
 });
 
+const updateStatusContact = async function (contactId, body) {
+  return await Contact.findByIdAndUpdate(contactId, body, { new: true });
+};
+
 router.put("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   try {
-    const updatedContact = await Contact.findByIdAndUpdate(
-      contactId,
-      req.body,
-      { new: true }
-    );
+    const updatedContact = await updateStatusContact(contactId, req.body);
     if (!updatedContact) {
       throw new NotFound();
     }
@@ -84,15 +84,11 @@ router.patch("/:contactId/favorite", async (req, res, next) => {
     if (favorite === undefined) {
       throw new BadRequest("missing field favorite");
     }
-    const updatedContact = await Contact.findByIdAndUpdate(
-      contactId,
-      { favorite },
-      { new: true }
-    );
+
+    const updatedContact = await updateStatusContact(contactId, { favorite });
     if (!updatedContact) {
       throw new NotFound();
     }
-
     res.json(updatedContact);
   } catch (error) {
     next(error);
