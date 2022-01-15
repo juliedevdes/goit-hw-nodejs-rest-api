@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { NotFound, BadRequest } = require("http-errors");
 
-const { Contact, joiSchema } = require("../../model");
+const { Contact } = require("../../models");
+const { joiSchema } = require("../../models/contact");
 
 router.get("/", async (req, res, next) => {
   try {
