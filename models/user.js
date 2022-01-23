@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const Joi = require("joi");
 
 const emailRegexp = /^\w+([.-]?\w+)+@\w+([.:]?\w+)+(\.[a-zA-Z0-9]{2,3})+$/;
 
@@ -8,7 +9,7 @@ const userSchema = Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlenght: 6,
+      minlength: 6,
     },
     email: {
       type: String,
@@ -29,14 +30,21 @@ const userSchema = Schema(
   { versionKey: false, timestamps: true }
 );
 
+// userSchema.methods.setPassword = function (password) {
+//   this.password = bcrypt.hashSync(password, bcrypt.genSalt(10));
+// };
+
 const User = model("user", userSchema);
 
-const Joi = require("joi");
-
-const joiSchema = Joi.object({
+const joiSchemaSignUp = Joi.object({
   name: Joi.string().required(),
-  password: Joi.string().required(),
+  password: Joi.string().min(6).required(),
   email: Joi.string().pattern(emailRegexp).required(),
 });
 
-module.exports = { User, joiSchema };
+const joiSchemaSignIn = Joi.object({
+  password: Joi.string().min(6).required(),
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
+module.exports = { User, joiSchemaSignUp, joiSchemaSignIn };

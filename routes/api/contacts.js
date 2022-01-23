@@ -4,8 +4,9 @@ const { NotFound, BadRequest } = require("http-errors");
 
 const { Contact } = require("../../models");
 const { joiSchema } = require("../../models/contact");
+const authenticate = require("../../middlewars/authenticate");
 
-router.get("/", async (req, res, next) => {
+router.get("/", authenticate, async (req, res, next) => {
   try {
     res.json(await Contact.find());
   } catch (error) {
@@ -13,7 +14,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/:contactId", async (req, res, next) => {
+router.get("/:contactId", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   try {
     const foundContact = await Contact.findById(contactId);
@@ -29,7 +30,8 @@ router.get("/:contactId", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", authenticate, async (req, res, next) => {
+  console.log(req.user);
   try {
     const { error } = joiSchema.validate(req.body);
     if (error) {
@@ -45,7 +47,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.delete("/:contactId", async (req, res, next) => {
+router.delete("/:contactId", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
 
   try {
@@ -63,7 +65,7 @@ const updateStatusContact = async function (contactId, body) {
   return await Contact.findByIdAndUpdate(contactId, body, { new: true });
 };
 
-router.put("/:contactId", async (req, res, next) => {
+router.put("/:contactId", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   try {
     const updatedContact = await updateStatusContact(contactId, req.body);
@@ -77,7 +79,7 @@ router.put("/:contactId", async (req, res, next) => {
   }
 });
 
-router.patch("/:contactId/favorite", async (req, res, next) => {
+router.patch("/:contactId/favorite", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   const { favorite } = req.body;
 
