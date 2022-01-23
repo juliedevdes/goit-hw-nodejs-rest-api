@@ -41,7 +41,6 @@ router.post("/signup", async (req, res, next) => {
 });
 
 router.post("/signin", async (req, res, next) => {
-  console.log(req.user);
   try {
     const { error } = joiSchemaSignIn.validate(req.body);
     if (error) {
@@ -68,6 +67,18 @@ router.post("/signin", async (req, res, next) => {
         subscription: user.subscription,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/current", authenticate, async (req, res, next) => {
+  try {
+    const { user } = req;
+    if (!user) {
+      throw new Unauthorized("Unauthorized");
+    }
+    res.json({ name: user.name, email: user.email });
   } catch (error) {
     next(error);
   }

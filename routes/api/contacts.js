@@ -8,7 +8,8 @@ const authenticate = require("../../middlewars/authenticate");
 
 router.get("/", authenticate, async (req, res, next) => {
   try {
-    res.json(await Contact.find());
+    const { _id } = req.user;
+    res.json(await Contact.find({ owner: _id }));
   } catch (error) {
     next(error);
   }
@@ -31,13 +32,13 @@ router.get("/:contactId", authenticate, async (req, res, next) => {
 });
 
 router.post("/", authenticate, async (req, res, next) => {
-  console.log(req.user);
   try {
     const { error } = joiSchema.validate(req.body);
     if (error) {
       throw new BadRequest(error.message);
     }
-    const newContact = await Contact.create(req.body);
+    const { _id } = req.user;
+    const newContact = await Contact.create({ ...req.body, owner: _id });
     res.status(201).json(newContact);
   } catch (error) {
     if (error.message.includes("is required")) {
