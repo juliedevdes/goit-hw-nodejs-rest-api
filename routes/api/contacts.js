@@ -2,17 +2,20 @@ const express = require("express");
 const router = express.Router();
 const { NotFound, BadRequest } = require("http-errors");
 
-const { Contact, joiSchema } = require("../../model");
+const { Contact } = require("../../models");
+const { joiSchema } = require("../../models/contact");
+const authenticate = require("../../middlewars/authenticate");
 
-router.get("/", async (req, res, next) => {
+router.get("/", authenticate, async (req, res, next) => {
   try {
-    res.json(await Contact.find());
+    const { _id } = req.user;
+    res.json(await Contact.find({ owner: _id }));
   } catch (error) {
     next(error);
   }
 });
 
-router.get("/:contactId", async (req, res, next) => {
+router.get("/:contactId", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   try {
     const foundContact = await Contact.findById(contactId);
@@ -28,13 +31,14 @@ router.get("/:contactId", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", authenticate, async (req, res, next) => {
   try {
     const { error } = joiSchema.validate(req.body);
     if (error) {
       throw new BadRequest(error.message);
     }
-    const newContact = await Contact.create(req.body);
+    const { _id } = req.user;
+    const newContact = await Contact.create({ ...req.body, owner: _id });
     res.status(201).json(newContact);
   } catch (error) {
     if (error.message.includes("is required")) {
@@ -44,7 +48,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.delete("/:contactId", async (req, res, next) => {
+router.delete("/:contactId", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
 
   try {
@@ -62,7 +66,7 @@ const updateStatusContact = async function (contactId, body) {
   return await Contact.findByIdAndUpdate(contactId, body, { new: true });
 };
 
-router.put("/:contactId", async (req, res, next) => {
+router.put("/:contactId", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   try {
     const updatedContact = await updateStatusContact(contactId, req.body);
@@ -76,7 +80,7 @@ router.put("/:contactId", async (req, res, next) => {
   }
 });
 
-router.patch("/:contactId/favorite", async (req, res, next) => {
+router.patch("/:contactId/favorite", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   const { favorite } = req.body;
 
